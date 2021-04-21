@@ -1,37 +1,46 @@
 
-import { useState } from 'react'
+import { useState , useEffect} from 'react'
 import Header from './components/Header'
 import Tasks from './components/Tasks'
 import Add from './components/Add'
  
-function App() { 
-  const [tasks, setTasks] = useState(
-    [
-        {
-            id: 1,
-            text: 'Meeting at School',
-            day: 'Feb 6th at 1:30pm',
-            reminder: true,
-        },
-        {
-            id: 2,
-            text: 'Doctors ppointment',
-            day: 'Feb 7th at 1:30pm',
-            reminder: true,
-        },
-        {
-            id: 3,
-            text: 'Meeting at School',
-            day: 'Feb 6th at 1:30pm',
-            reminder: false,
-        }
-    ])
+function App() {
+  const [showAddTask,setShowAddTask] = useState(false)
+  const [tasks, setTasks] = useState([])
     //Add Task
-  const addTask = (task) => {
-    console.log(task);
+  const addTask =  async(task) => {
+    const res = await fetch(`http://localhost:5000/tasks`,{
+      method: 'POST',
+      headers: 
+      {
+        'Content-type': 'application/json'
+      },
+      body: JSON.stringify(task)
+    })
+    const data = await res.json()
+    setTasks([...tasks,data])
+    // const id = Math.floor(Math.random() * 10000)+ 1
+    // const NewTask = {id,...task}
+    // setTasks([...tasks,NewTask]);
+    // console.log(id);
   }
+  useEffect(() => {
+    const getTasks = async () => {
+      const tasksFromServer = await fetchTasks()
+      setTasks(tasksFromServer);
+    }
+   
+    getTasks()
+    },[])
+    /// fetche data
+    const fetchTasks = async () => {
+      const res = await fetch('http://localhost:5000/tasks')
+      const data = await res.json()
+      return (data)      
+    }
       //Delete task
-  const deletTask = (id) => {
+  const deletTask = async (id) => {
+    await fetch(`http://localhost:5000/tasks/${id}`,{method: 'DELETE'})
     setTasks(tasks.filter((task) => task.id !== id))
   }
 
@@ -42,8 +51,8 @@ const toggleReminder = (id) => {
 
   return (
     <div className="container">
-      <Header title = {"youssef"}/>
-      <Add onAdd = {addTask}/>
+      <Header onAdd = {() => setShowAddTask(!showAddTask)} showAdd = {showAddTask}/>
+      { showAddTask && <Add OnAdd = {addTask}/>}
       {tasks.length > 0 ? (<Tasks  task = {tasks}
       onDelete = {deletTask} onToggle = {toggleReminder}/>) : ("no task to show")}
     </div>
